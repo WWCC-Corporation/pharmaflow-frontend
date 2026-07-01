@@ -23,3 +23,29 @@ export type CashMovement = {
   amount: string
   date: string
 }
+
+export type SalesChartPoint = {
+  date: string
+  label: string
+  total: number
+  salesCount: number
+}
+
+export type DashboardInventoryItem = {
+  product: string
+  branch: string
+  code?: string
+  lot?: string
+  currentStock: number
+  minimumStock?: number
+  expirationDate?: string
+  status?: string
+}
+
+export type DashboardInventorySummary = {
+  lowStockCount: number
+  expiringCount: number
+  expiredCount: number
+  lowStock: DashboardInventoryItem[]
+  expiringProducts: DashboardInventoryItem[]
+}

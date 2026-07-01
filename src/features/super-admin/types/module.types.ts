@@ -15,6 +15,8 @@ export type ModuleAction = {
 }
 
 export type ModulePageConfig = {
+  error?: string | null
+  isLoading?: boolean
   path: string
   title: string
   description: string
@@ -27,4 +29,13 @@ export type ModulePageConfig = {
   rows: string[][]
   actionsTitle: string
   actions: ModuleAction[]
+}
+
+export type ModuleFormField = {
+  key: string
+  label: string
+  placeholder?: string
+  required?: boolean
+  type?: 'checkbox' | 'date' | 'email' | 'number' | 'select' | 'text'
+  options?: Array<{ label: string; value: string }>
 }

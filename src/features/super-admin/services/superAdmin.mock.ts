@@ -298,5 +298,19 @@ export const superAdminModules: ModulePageConfig[] = [
 ]
 
 export function getSuperAdminModule(path: string) {
-  return superAdminModules.find((module) => module.path === path)
+  const module = superAdminModules.find((item) => item.path === path)
+
+  if (!module) {
+    return undefined
+  }
+
+  return {
+    ...module,
+    metrics: module.metrics.map((metric) => ({
+      ...metric,
+      detail: 'Consultando backend',
+      value: '0',
+    })),
+    rows: [],
+  }
 }

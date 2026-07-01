@@ -10,11 +10,12 @@ export type SalesMetric = {
 
 export type SaleStatus = 'Completada' | 'Anulada'
 
-export type PaymentMethod = 'Yape' | 'Efectivo' | 'Tarjeta'
+export type PaymentMethod = 'Yape' | 'Efectivo' | 'Tarjeta' | 'Plin'
 
 export type SaleRow = {
   code: string
   customer: string
+  id: string
   products: string
   paymentMethod: PaymentMethod
   status: SaleStatus

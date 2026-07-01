@@ -7,6 +7,9 @@ type QuickSalePanelProps = {
 }
 
 export function QuickSalePanel({ items, onSubmit }: QuickSalePanelProps) {
+  const subtotal = items.reduce((sum, item) => sum + parseMoney(item.total), 0)
+  const formattedSubtotal = new Intl.NumberFormat('es-PE', { currency: 'PEN', style: 'currency' }).format(subtotal)
+
   return (
     <section className="rounded-2xl border border-[#E8EAF3] bg-white p-6 shadow-[0_10px_30px_rgba(17,26,68,0.06)]">
       <div className="mb-6 flex items-center justify-between">
@@ -40,6 +43,13 @@ export function QuickSalePanel({ items, onSubmit }: QuickSalePanelProps) {
         <div className="rounded-xl bg-[#FAFBFF] p-4">
           <p className="mb-4 text-sm font-bold text-[#111A44]">Detalle</p>
           <div className="space-y-3">
+            {items.length === 0 && (
+              <div className="rounded-lg border border-dashed border-[#DCE1EE] bg-white px-4 py-6 text-center">
+                <p className="text-sm font-bold text-[#111A44]">Sin productos agregados</p>
+                <p className="mt-1 text-xs text-[#667197]">Usa "Nueva venta" para registrar una venta real mediante el API.</p>
+              </div>
+            )}
+
             {items.map((item) => (
               <div className="rounded-lg bg-white p-3 shadow-sm" key={item.product}>
                 <div className="flex items-start justify-between gap-3">
@@ -57,9 +67,9 @@ export function QuickSalePanel({ items, onSubmit }: QuickSalePanelProps) {
         </div>
 
         <div className="space-y-3 rounded-xl border border-[#E8EAF3] p-4">
-          <SummaryRow label="Subtotal" value="S/ 47.50" />
+          <SummaryRow label="Subtotal" value={formattedSubtotal} />
           <SummaryRow label="Descuento" value="S/ 0.00" />
-          <SummaryRow label="Total" strong value="S/ 47.50" />
+          <SummaryRow label="Total" strong value={formattedSubtotal} />
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -88,6 +98,13 @@ export function QuickSalePanel({ items, onSubmit }: QuickSalePanelProps) {
       </div>
     </section>
   )
+}
+
+function parseMoney(value: string) {
+  const normalized = value.replace(/[^\d.,-]/g, '').replace(',', '.')
+  const parsed = Number(normalized)
+
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
 function SummaryRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {

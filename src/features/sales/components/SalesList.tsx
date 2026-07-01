@@ -38,6 +38,17 @@ export function SalesList({ onViewSale, sales }: SalesListProps) {
             </tr>
           </thead>
           <tbody>
+            {sales.length === 0 && (
+              <tr>
+                <td className="py-10 text-center" colSpan={8}>
+                  <div className="rounded-xl border border-dashed border-[#DCE1EE] bg-[#F8FAFF] px-5 py-8">
+                    <p className="text-sm font-bold text-[#111A44]">No hay ventas registradas desde el API</p>
+                    <p className="mt-2 text-sm text-[#667197]">Cuando se registren ventas reales, apareceran en este historial.</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+
             {sales.map((sale) => (
               <tr className="border-b border-[#E8EAF3] last:border-0" key={sale.code}>
                 <td className="py-4 text-xs font-medium text-[#283256]">{sale.code}</td>
@@ -69,9 +80,10 @@ export function SalesList({ onViewSale, sales }: SalesListProps) {
 
 function renderPaymentMethod(method: PaymentMethod) {
   const styles: Record<PaymentMethod, string> = {
-    Yape: 'bg-[#AE19C2] text-white',
     Efectivo: 'bg-emerald-100 text-emerald-600',
+    Plin: 'bg-cyan-100 text-cyan-700',
     Tarjeta: 'bg-slate-100 text-[#475174]',
+    Yape: 'bg-[#AE19C2] text-white',
   }
 
   return <span className={`rounded px-2 py-1 text-[11px] font-bold ${styles[method]}`}>{method}</span>
