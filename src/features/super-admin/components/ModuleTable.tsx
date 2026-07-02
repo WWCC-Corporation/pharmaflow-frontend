@@ -25,6 +25,17 @@ export function ModuleTable({ title, description, columns, rows }: ModuleTablePr
             </tr>
           </thead>
           <tbody>
+            {rows.length === 0 && (
+              <tr>
+                <td className="py-10 text-center" colSpan={columns.length}>
+                  <div className="rounded-xl border border-dashed border-[#DCE1EE] bg-[#F8FAFF] px-5 py-8">
+                    <p className="text-sm font-bold text-[#111A44]">Sin registros reales para mostrar</p>
+                    <p className="mt-2 text-sm text-[#667197]">Cuando el backend responda datos para este modulo, apareceran en esta tabla.</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+
             {rows.map((row) => (
               <tr className="border-b border-[#E8EAF3] last:border-0" key={row.join('-')}>
                 {row.map((cell, index) => (

@@ -10,7 +10,9 @@ export function TopProducts({ products }: TopProductsProps) {
     <section className="rounded-2xl border border-[#E8EAF3] bg-white p-6 shadow-[0_10px_30px_rgba(17,26,68,0.06)]">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Trophy className="text-[#AE19C2]" size={24} />
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F6E8FA] to-white text-[#AE19C2] shadow-[0_12px_24px_rgba(174,25,194,0.12)]">
+            <Trophy size={24} strokeWidth={2.4} />
+          </span>
           <h2 className="text-lg font-bold text-[#111A44]">Productos mas vendidos</h2>
         </div>
         <button className="rounded-lg bg-[#F6E8FA] px-4 py-2 text-sm font-bold text-[#AE19C2]" type="button">
@@ -19,6 +21,13 @@ export function TopProducts({ products }: TopProductsProps) {
       </div>
 
       <div className="space-y-5">
+        {products.length === 0 && (
+          <div className="rounded-xl border border-dashed border-[#DCE1EE] bg-[#F8FAFF] px-5 py-8 text-center">
+            <p className="text-sm font-semibold text-[#111A44]">Aun no hay ranking disponible</p>
+            <p className="mt-2 text-sm text-[#667197]">Cuando haya mas ventas registradas, aqui apareceran los productos con mayor rotacion.</p>
+          </div>
+        )}
+
         {products.map((product, index) => (
           <div className="grid grid-cols-[34px_44px_1fr_80px_150px] items-center gap-4" key={product.name}>
             <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${index < 3 ? 'bg-[#F6E8FA] text-[#AE19C2]' : 'bg-slate-100 text-[#475174]'}`}>

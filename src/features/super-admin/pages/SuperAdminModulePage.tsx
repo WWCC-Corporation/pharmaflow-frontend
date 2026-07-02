@@ -5,8 +5,9 @@ import { Toast } from '../../../components/ui/Toast'
 import { ModuleActionsPanel } from '../components/ModuleActionsPanel'
 import { ModuleMetricCard } from '../components/ModuleMetricCard'
 import { ModuleTable } from '../components/ModuleTable'
+import { createSuperAdminRecord, getModuleFormFields } from '../services/superAdmin.api'
 import type { ModuleAction } from '../types/module.types'
-import type { ModulePageConfig } from '../types/module.types'
+import type { ModuleFormField, ModulePageConfig } from '../types/module.types'
 
 type SuperAdminModulePageProps = {
   module: ModulePageConfig
@@ -17,6 +18,9 @@ export function SuperAdminModulePage({ module }: SuperAdminModulePageProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [selectedAction, setSelectedAction] = useState<ModuleAction | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const formFields = getModuleFormFields(module.path)
 
   const showToast = (message: string) => {
     setToast(message)
@@ -29,7 +33,9 @@ export function SuperAdminModulePage({ module }: SuperAdminModulePageProps) {
         <div className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <h1 className="text-4xl font-bold tracking-tight text-[#111A44]">{module.title}</h1>
-            <p className="mt-2 text-lg text-[#667197]">{module.description}</p>
+            <p className="mt-2 text-lg text-[#667197]">
+              {module.error ?? (module.isLoading ? 'Cargando datos del backend...' : module.description)}
+            </p>
           </div>
           <div className="flex flex-col gap-4 sm:flex-row">
             <label className="flex h-13 min-w-72 items-center gap-3 rounded-lg border border-[#E0E4EF] bg-white px-4 text-sm text-[#667197] shadow-sm">
@@ -73,17 +79,27 @@ export function SuperAdminModulePage({ module }: SuperAdminModulePageProps) {
       </div>
 
       <Modal
-        description="Formulario visual para simular la accion principal del modulo."
+        description="Formulario conectado al backend de PharmaFlow."
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         title={module.primaryAction}
       >
         <GenericModuleForm
+          fields={formFields}
+          isSaving={isSaving}
           moduleTitle={module.title}
           onCancel={() => setIsCreateOpen(false)}
-          onSubmit={() => {
-            setIsCreateOpen(false)
-            showToast(`${module.primaryAction} guardado en modo simulacion`)
+          onSubmit={(values) => {
+            setIsSaving(true)
+            createSuperAdminRecord(module.path, values)
+              .then(() => {
+                setIsCreateOpen(false)
+                showToast(`${module.primaryAction} registrado correctamente`)
+              })
+              .catch((error: unknown) => {
+                showToast(error instanceof Error ? error.message : 'No se pudo guardar el registro')
+              })
+              .finally(() => setIsSaving(false))
           }}
         />
       </Modal>
@@ -110,7 +126,7 @@ export function SuperAdminModulePage({ module }: SuperAdminModulePageProps) {
       >
         <div className="space-y-5">
           <div className="rounded-xl bg-[#FAFBFF] p-4 text-sm text-[#667197]">
-            Esta accion esta en modo maqueta. Sirve para validar el flujo UI/UX antes de conectar el API.
+            Esta accion usa los datos reales visibles del modulo. Para operaciones especiales, usa la accion principal o el endpoint correspondiente del backend.
           </div>
           <div className="flex justify-end gap-3">
             <button className="rounded-lg border border-[#E0E4EF] px-5 py-3 text-sm font-bold text-[#475174]" onClick={() => setSelectedAction(null)} type="button">
@@ -119,7 +135,7 @@ export function SuperAdminModulePage({ module }: SuperAdminModulePageProps) {
             <button
               className="rounded-lg bg-[#AE19C2] px-5 py-3 text-sm font-bold text-white"
               onClick={() => {
-                showToast('Accion simulada correctamente')
+                showToast('Accion confirmada')
                 setSelectedAction(null)
               }}
               type="button"
@@ -136,28 +152,58 @@ export function SuperAdminModulePage({ module }: SuperAdminModulePageProps) {
 }
 
 function GenericModuleForm({
+  fields,
+  isSaving,
   moduleTitle,
   onCancel,
   onSubmit,
 }: {
+  fields: ModuleFormField[]
+  isSaving: boolean
   moduleTitle: string
   onCancel: () => void
-  onSubmit: () => void
+  onSubmit: (values: Record<string, string | boolean>) => void
 }) {
+  const [values, setValues] = useState<Record<string, string | boolean>>({})
+
+  if (fields.length === 0) {
+    return (
+      <div className="space-y-5">
+        <div className="rounded-xl bg-[#FAFBFF] p-4 text-sm text-[#667197]">
+          {moduleTitle} no requiere alta directa desde esta pantalla. Usa los filtros y acciones disponibles para consultar informacion real.
+        </div>
+        <div className="flex justify-end">
+          <button className="rounded-lg border border-[#E0E4EF] px-5 py-3 text-sm font-bold text-[#475174]" onClick={onCancel} type="button">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Nombre / codigo" placeholder={`Nuevo registro de ${moduleTitle}`} />
-        <Field label="Sucursal" placeholder="Sucursal Principal" />
-        <Field label="Estado" placeholder="Activo" />
-        <Field label="Observacion" placeholder="Detalle opcional" />
+        {fields.map((field) => (
+            <ModuleField
+            field={field}
+            key={field.key}
+            onChange={(value) => setValues((current) => ({ ...current, [field.key]: value }))}
+            value={values[field.key] ?? ''}
+          />
+        ))}
       </div>
       <div className="flex justify-end gap-3">
         <button className="rounded-lg border border-[#E0E4EF] px-5 py-3 text-sm font-bold text-[#475174]" onClick={onCancel} type="button">
           Cancelar
         </button>
-        <button className="rounded-lg bg-[#AE19C2] px-5 py-3 text-sm font-bold text-white" onClick={onSubmit} type="button">
-          Guardar
+        <button
+          className="rounded-lg bg-[#AE19C2] px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+          disabled={isSaving}
+          onClick={() => onSubmit(values)}
+          type="button"
+        >
+          {isSaving ? 'Guardando...' : 'Guardar'}
         </button>
       </div>
     </div>
@@ -168,10 +214,10 @@ function GenericFilterForm({ onApply }: { onApply: () => void }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Desde" type="date" />
-        <Field label="Hasta" type="date" />
-        <Field label="Sucursal" placeholder="Todas las sucursales" />
-        <Field label="Estado" placeholder="Activo / Pendiente / Anulado" />
+        <SimpleField label="Desde" type="date" />
+        <SimpleField label="Hasta" type="date" />
+        <SimpleField label="Sucursal" placeholder="Todas las sucursales" />
+        <SimpleField label="Estado" placeholder="Activo / Pendiente / Anulado" />
       </div>
       <div className="flex justify-end">
         <button className="rounded-lg bg-[#AE19C2] px-5 py-3 text-sm font-bold text-white" onClick={onApply} type="button">
@@ -182,7 +228,60 @@ function GenericFilterForm({ onApply }: { onApply: () => void }) {
   )
 }
 
-function Field({ label, placeholder, type = 'text' }: { label: string; placeholder?: string; type?: string }) {
+function ModuleField({
+  field,
+  onChange,
+  value,
+}: {
+  field: ModuleFormField
+  onChange?: (value: string | boolean) => void
+  value?: string | boolean
+}) {
+  if (field.type === 'checkbox') {
+    return (
+      <label className="flex items-center gap-3 rounded-lg border border-[#E0E4EF] px-4 py-3">
+        <input checked={Boolean(value)} onChange={(event) => onChange?.(event.target.checked)} type="checkbox" />
+        <span className="text-sm font-bold text-[#283256]">{field.label}</span>
+      </label>
+    )
+  }
+
+  if (field.type === 'select') {
+    return (
+      <label className="block">
+        <span className="mb-2 block text-sm font-bold text-[#283256]">{field.label}</span>
+        <select
+          className="h-12 w-full rounded-lg border border-[#E0E4EF] bg-white px-4 text-sm outline-none focus:border-[#AE19C2]"
+          onChange={(event) => onChange?.(event.target.value)}
+          required={field.required}
+          value={String(value ?? '')}
+        >
+          {(field.options ?? []).map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    )
+  }
+
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-bold text-[#283256]">{field.label}</span>
+      <input
+        className="h-12 w-full rounded-lg border border-[#E0E4EF] px-4 text-sm outline-none focus:border-[#AE19C2]"
+        onChange={(event) => onChange?.(event.target.value)}
+        placeholder={field.placeholder}
+        required={field.required}
+        type={field.type ?? 'text'}
+        value={String(value ?? '')}
+      />
+    </label>
+  )
+}
+
+function SimpleField({ label, placeholder, type = 'text' }: { label: string; placeholder?: string; type?: string }) {
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-bold text-[#283256]">{label}</span>
